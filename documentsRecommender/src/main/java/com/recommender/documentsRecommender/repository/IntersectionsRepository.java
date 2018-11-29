@@ -17,4 +17,7 @@ public interface IntersectionsRepository extends JpaRepository<Intersections, St
 	 */
 	@Query("SELECT new Intersections(t.idIntersection, t.value, t.idDocumentA, t.idDocumentB) FROM Intersections t where t.idDocumentA = :idDocument OR t.idDocumentB = :idDocument") 
     List<Intersections> findIntersectionsObjects(@Param("idDocument") String idDocument);
+	
+	@Query("SELECT DISTINCT new Intersections(t.idIntersection, t.value, t.idDocumentA, t.idDocumentB) FROM Intersections t where t.idIntersection = :idIntersection") 
+    Intersections findIntersection(@Param("idIntersection") String idIntersection);
 }

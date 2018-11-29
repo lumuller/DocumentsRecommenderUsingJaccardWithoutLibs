@@ -24,7 +24,7 @@
 		<java.version>1.8</java.version>
 	</properties>
 
-	<dependencies>
+<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -39,20 +39,18 @@
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-		<!--
+		 <!--
 		<dependency>
 		    <groupId>org.apache.derby</groupId>
 		    <artifactId>derby</artifactId>
 		    <scope>runtime</scope>
 		</dependency>
-		 -->
+		-->
 		
-		 
 		<dependency>
   			<groupId>com.h2database</groupId>
   			<artifactId>h2</artifactId>
 		</dependency>
-		
 		 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -60,6 +58,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -68,4 +67,6 @@
 			</plugin>
 		</plugins>
 	</build>
+
+
 </project>

@@ -21,7 +21,7 @@ import com.recommender.documentsRecommender.repository.IntersectionsRepository;
 import com.recommender.documentsRecommender.repository.UsersDocumentsRepository;
 
 @RestController
-@RequestMapping(value="/www.globoplay.globo.com")
+@RequestMapping(value="/globo")
 public class DocumentsUsersResource {
 		
 	@Autowired
@@ -65,9 +65,9 @@ public class DocumentsUsersResource {
 		
 		Random r = new Random();
 		System.out.println("Inserindo 1 milhao de registros...");
-		for(int i=0;i<1000000;i++) {			
-			String idDoc = "D"+ (int)(r.nextInt(100));
-			String idUser = "U"+ (int)(r.nextInt(5000));			
+		for(int i=0;i<10000;i++) {			
+			String idDoc = "D"+ (int)(r.nextInt(1000));
+			String idUser = "U"+ (int)(r.nextInt(50000));			
 			addView(idDoc, idUser);			
 		}	
 		System.out.println(usersDocumentsRepository.count());
@@ -89,9 +89,10 @@ public class DocumentsUsersResource {
 	 * @param visualization a DocumentUser object built with the data sent by POST method
 	 */
 	public void addView(String idDocument, String idUser) {		
-		UsersDocuments ud;
-		//if is the first visualization performed by the user...
-		if(!usersDocumentsRepository.existsById(idUser)) {
+		//retrieves the user register from database
+		UsersDocuments ud = usersDocumentsRepository.findUser(idUser);
+		//if is the first visualization performed by the user, he will not exists into database...
+		if(ud==null) {
 			//then, create a new user, include the document in the list of documents he visualized.
 			ud = new UsersDocuments();
 			ud.setIdUser(idUser);
@@ -102,9 +103,7 @@ public class DocumentsUsersResource {
 			//(Ps: even in this case, when the user have never visualized anything, we use this method to update the value of the document self-intersection
 			updateIntersectionList(idDocument, ud);
 		} else {
-			//else, retrieves this user register from the database...
-			ud = usersDocumentsRepository.getOne(idUser);
-			//and includes the new document in users list, only if the user have never visualized it before
+			//else, includes the new document in users list, only if the user have never visualized it before
 			if(!ud.getListDocuments().contains(idDocument)) {
 				ud.setListDocuments(ud.getListDocuments()+idDocument+",");
 				//save the new register into database
@@ -138,11 +137,12 @@ public class DocumentsUsersResource {
 			//We call this special intersection as self-intersection ID.			
 			String intersectionId = generateIdIntersection(idDocVisualized, d);		
 			
-			Intersections intersection = null;				
+			//retrieves the intersection from database 
+			Intersections intersection = intersectionsRepository.findIntersection(intersectionId);			
+			
 			//if the intersection register between two documents already exists...
-			if(intersectionsRepository.existsById(intersectionId)){
-				//retrieve it from database, and add 1 to the amount.
-				intersection = intersectionsRepository.getOne(intersectionId); 
+			if(intersection!=null){
+				//just add 1 to the value of the intersection
 				long newSize = intersection.getValue() + 1;
 				intersection.setValue(newSize);			
 			} else {		

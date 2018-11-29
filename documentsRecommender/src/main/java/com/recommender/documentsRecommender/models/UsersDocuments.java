@@ -9,7 +9,17 @@ import javax.persistence.Table;
 @Table(name="tb_users_documents")
 public class UsersDocuments {
 	private static final long servialVersionUID = 1L;
-	
+		
+	public UsersDocuments() {
+		super();
+	}
+
+	public UsersDocuments(String idUser, String listDocuments) {
+		super();
+		this.idUser = idUser;
+		this.listDocuments = listDocuments;
+	}
+
 	@Id
 	private String idUser;	
 	
