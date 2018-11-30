@@ -7,23 +7,23 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name="tb_users_documents")
-public class UsersDocuments {
+public class UserDocuments {
 	private static final long servialVersionUID = 1L;
 		
-	public UsersDocuments() {
+	public UserDocuments() {
 		super();
 	}
 
-	public UsersDocuments(String idUser, String listDocuments) {
+	public UserDocuments(String idUser, String listDocuments) {
 		super();
 		this.idUser = idUser;
-		this.listDocuments = listDocuments;
+		this.documentsList = listDocuments;
 	}
 
 	@Id
 	private String idUser;	
 	
-	private String listDocuments;		
+	private String documentsList;		
 	
 	public String getIdUser() {
 		return idUser;
@@ -33,12 +33,12 @@ public class UsersDocuments {
 		this.idUser = idUser;
 	}
 
-	public String getListDocuments() {
-		return listDocuments;
+	public String getDocumentsList() {
+		return documentsList;
 	}	
 	
-	public void setListDocuments(String listDocuments) {
-		this.listDocuments = listDocuments;
+	public void setDocumentsList(String documentsList) {
+		this.documentsList = documentsList;
 	}
 
 }

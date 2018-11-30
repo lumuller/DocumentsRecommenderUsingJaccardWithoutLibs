@@ -6,7 +6,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name="tb_intersections")
-public class Intersections {
+public class Intersection {
 	private static final long servialVersionUID = 1L;
 	
 	@Id
@@ -18,12 +18,11 @@ public class Intersections {
 	
 	private String idDocumentB;	
 	
-	public Intersections() {
+	public Intersection() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
-	public Intersections(String idIntersection, long value, String idDocumentA, String idDocumentB) {
+	public Intersection(String idIntersection, long value, String idDocumentA, String idDocumentB) {
 		super();
 		this.idIntersection = idIntersection;
 		this.value = value;

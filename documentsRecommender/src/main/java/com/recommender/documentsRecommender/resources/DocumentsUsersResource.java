@@ -15,20 +15,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.recommender.documentsRecommender.models.Intersections;
-import com.recommender.documentsRecommender.models.UsersDocuments;
-import com.recommender.documentsRecommender.repository.IntersectionsRepository;
-import com.recommender.documentsRecommender.repository.UsersDocumentsRepository;
+import com.recommender.documentsRecommender.models.Intersection;
+import com.recommender.documentsRecommender.models.UserDocuments;
+import com.recommender.documentsRecommender.repository.IntersectionRepository;
+import com.recommender.documentsRecommender.repository.UserDocumentsRepository;
 
 @RestController
-@RequestMapping(value="/globo")
+@RequestMapping(value="/www.globoplay.globo.com")
 public class DocumentsUsersResource {
 		
 	@Autowired
-	UsersDocumentsRepository usersDocumentsRepository;
+	UserDocumentsRepository usersDocumentsRepository;
 	
 	@Autowired
-	IntersectionsRepository intersectionsRepository;
+	IntersectionRepository intersectionsRepository;
 	
 	@DeleteMapping("/deleteAll")
 	public void deleteDatabase() {		
@@ -64,23 +64,22 @@ public class DocumentsUsersResource {
 		System.out.println("Starting time: " + new Date());
 		
 		Random r = new Random();
-		System.out.println("Inserindo 1 milhao de registros...");
+		System.out.println("Inserindo 100 mil registros...");
 		for(int i=0;i<10000;i++) {			
 			String idDoc = "D"+ (int)(r.nextInt(1000));
 			String idUser = "U"+ (int)(r.nextInt(50000));			
 			addView(idDoc, idUser);			
 		}	
-		System.out.println(usersDocumentsRepository.count());
-		System.out.println(intersectionsRepository.count());
 		System.out.println("\nFinishing time: " + new Date());		
 	}
 	
 	@PostMapping("/v/{idDoc}/view")
-	public void saveView(@RequestBody String user, @PathVariable(value="idDoc") String idDocument) {
+	public String saveView(@RequestBody String user, @PathVariable(value="idDoc") String idDocument) {
 		if(user.charAt(user.length()-1)=='=') {//not sure why, but it adds an = signal in the end of the String. The following code will remove it.
 			user = user.substring(0, user.length()-1);
 		}		
 		addView(idDocument, user);		
+		return "View was recorded successfully";
 	}
 	
 	/**
@@ -90,13 +89,13 @@ public class DocumentsUsersResource {
 	 */
 	public void addView(String idDocument, String idUser) {		
 		//retrieves the user register from database
-		UsersDocuments ud = usersDocumentsRepository.findUser(idUser);
+		UserDocuments ud = usersDocumentsRepository.findUser(idUser);
 		//if is the first visualization performed by the user, he will not exists into database...
 		if(ud==null) {
 			//then, create a new user, include the document in the list of documents he visualized.
-			ud = new UsersDocuments();
+			ud = new UserDocuments();
 			ud.setIdUser(idUser);
-			ud.setListDocuments(idDocument+",");			
+			ud.setDocumentsList(idDocument+",");			
 			//save the new register into database
 			usersDocumentsRepository.save(ud);	
 			//update the intersections registers from this document, based on the documents previously visualized by the user 
@@ -104,8 +103,8 @@ public class DocumentsUsersResource {
 			updateIntersectionList(idDocument, ud);
 		} else {
 			//else, includes the new document in users list, only if the user have never visualized it before
-			if(!ud.getListDocuments().contains(idDocument)) {
-				ud.setListDocuments(ud.getListDocuments()+idDocument+",");
+			if(!ud.getDocumentsList().contains(idDocument)) {
+				ud.setDocumentsList(ud.getDocumentsList()+idDocument+",");
 				//save the new register into database
 				usersDocumentsRepository.save(ud);	
 				//update the intersections registers from this document, based on the documents previously visualized by the user
@@ -120,12 +119,12 @@ public class DocumentsUsersResource {
 	 * @param idDocVisualized id of the document being visualized
 	 * @param idUserWhoVisualized id of the user who is visualizing the document 
 	 */
-	private void updateIntersectionList(String idDocVisualized, UsersDocuments userWhoVisualized){
+	private void updateIntersectionList(String idDocVisualized, UserDocuments userWhoVisualized){
 		//split the list of all the documents visualized by the user. We need to access the document ids individually
-		String [] documentsVisualizedByTheUser =  userWhoVisualized.getListDocuments().split(",");		
+		String [] documentsVisualizedByTheUser =  userWhoVisualized.getDocumentsList().split(",");		
 		
 		//This list will keep all the changes made on the intersections, to perform an save all (faster than save one by one).
-		List<Intersections> updatedIntersections = new ArrayList<>();	
+		List<Intersection> updatedIntersections = new ArrayList<>();	
 		
 		//for each document visualized by the user...		
 		for(String d: documentsVisualizedByTheUser) {
@@ -138,7 +137,7 @@ public class DocumentsUsersResource {
 			String intersectionId = generateIdIntersection(idDocVisualized, d);		
 			
 			//retrieves the intersection from database 
-			Intersections intersection = intersectionsRepository.findIntersection(intersectionId);			
+			Intersection intersection = intersectionsRepository.findIntersection(intersectionId);			
 			
 			//if the intersection register between two documents already exists...
 			if(intersection!=null){
@@ -147,7 +146,7 @@ public class DocumentsUsersResource {
 				intersection.setValue(newSize);			
 			} else {		
 				//else, creates a new one, with initial value equals to 1.
-				intersection = new Intersections(intersectionId, 1, idDocVisualized, d);			
+				intersection = new Intersection(intersectionId, 1, idDocVisualized, d);			
 			}		
 			//add the intersections (new one or a modified one) to the list.
 			updatedIntersections.add(intersection);			
@@ -196,23 +195,23 @@ public class DocumentsUsersResource {
 		List<ResultPresentation> resultList = new ArrayList<ResultPresentation>(); 	    	
 	    	
 			//Retrieving the list of intersection registers from this document
-	    	List<Intersections> intersectionsObjects = intersectionsRepository.findIntersectionsObjects(baseDocument);
+	    	List<Intersection> intersectionsObjects = intersectionsRepository.findIntersectionsObjects(baseDocument);
 	    	
 	    	//retrieves the self-intersection register from the base document
-	    	Intersections baseDocumentSelfIntersectionRegister = intersectionsObjects.stream()
+	    	Intersection baseDocumentSelfIntersectionRegister = intersectionsObjects.stream()
 					  .filter(intersection -> (baseDocument+baseDocument).equals(intersection.getIdIntersection()))
 					  .findAny()
 					  .orElse(null);
 	    	
 	    	//for each one of this registers
-	    	for(Intersections k : intersectionsObjects) {	    	
+	    	for(Intersection k : intersectionsObjects) {	    	
 	    		Long sizeBase=null, sizeCompared=null, sizeIntersection=null;
 	    		if(k.getIdIntersection().equalsIgnoreCase(baseDocument + baseDocument)) {
 	    			//if we are looking to a self-intersection register, just ignore. Otherwise, we will calculate the similarity between the document itself.	    			
 	    			continue;
 	    		} else {	    
 	    			//retrieves the self-intersection register from the document being compared	    			
-	    			Intersections comparedDocumentSelfIntersectionRegister = 
+	    			Intersection comparedDocumentSelfIntersectionRegister = 
 	    					baseDocument.equals(k.getIdDocumentA()) ? 
 							intersectionsRepository.getOne(k.getIdDocumentB() + k.getIdDocumentB()) : 
 							intersectionsRepository.getOne(k.getIdDocumentA() + k.getIdDocumentA());	    			
@@ -259,7 +258,7 @@ public class DocumentsUsersResource {
 				this.score = score;
 			}			
 			public String getUrl() {
-				return url;
+				return "www.globoplay.globo.com/v/" + url;
 			}
 			public double getScore() {
 				return score;
