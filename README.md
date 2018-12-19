@@ -1,104 +1,117 @@
-## Luana Muller
-Desafio Big Data
+## Luana Müller
+DocumentsRecommender Project
 ================
 
 ## Considerações Gerais
 
-Você deverá usar este repositório para desenvolver seu projeto, ou seja, todos os seus commits devem estar registrados
-aqui, pois queremos ver como você trabalha.
+Projeto de sistema de recomendação de documentos baseada em co-visitação de documentos.
 
-Sua solução deve ser simples de ser executada, seguindo as condições abaixo:
+## Detalhes do projeto
 
-* Precisamos conseguir rodar seu código no Ubuntu disonibilizado na VM no AWS. As instruções estão em amazon/README.md;
-* Registre tudo: testes que forem executados, ideias que gostaria de implementar se tivesse tempo (explique como você
-as resolveria, se houvesse tempo), decisões que foram tomadas e os seus porquês, arquiteturas que foram testadas e os
-motivos de terem sido modificadas ou abandonadas;
+O projeto foi contruído utilizando a linguagem Java, utilizando o framework open-source Spring.
+A construção do projeto foi feita através do Spring Boot. 
 
+### Interfaces da API
 
-## O Problema
+#### POST: 
 
-O seu desafio consiste em recomendar documentos similares a um dado documento no estilo "quem viu isso, também viu...".
-Seu algoritmo deve se basear no cálculo de covisitação. Isto é, dois documentos são considerados similares se um
-conjunto grande de usuários visitou os dois documentos. Mais precisamente, a similaridade entre o documento A e B é dada pela
-quantidade de usuários que visitaram os dois documentos (A e B) dividido pela quantidade de usuários únicos que visitaram
-qualquer um dos documentos (A ou B). Essa métrica é conhecida como [Jaccard similarity coefficient](https://en.wikipedia.org/wiki/Jaccard_index).
+Esse interface será chamada cada vez que um usuário ver um documento. Recebe o parâmetro `user`.
+Forma de uso: `$ curl -d"user=user1" http://localhost:8080/www.globoplay.globo.com/<idDocumento>/view`
 
-Você deve criar uma API HTTP com duas interfaces:
+#### GET:
 
-### POST `/<url>/view`:
+Essa interface irá retornar no formato json a lista dos dez documentos mais similares em ordem decrescente.
+Forma de uso: `$ curl http://localhost:8080/www.globoplay.globo.com/<idDocumento>/similar/`
 
-  Esse interface será chamada cada vez que um usuário ver um documento. Recebe o parâmetro `user`.
-
-  Exemplo de uso: `$ curl -d"user=user1" http://localhost:8080/www.globoplay.com/view/`
-
-### GET `/<url>/similar`:
-
-Essa interface deve retornar no formato json a lista dos dez documentos mais similares em ordem decrescente. Esse cálculo não precisa ser online.
-
-Exemplo de uso: `$ curl http://localhost:8080/www.globoplay.com/similar/`
-
-Exemplo de retorno:
-
-    [{
-        "url": "www.globoplay.globo.com/v/4455325/",
-        "score": 1.0
-     }, {
-        "url": "www.globoplay.globo.com/v/4455292/",
-        "score": 0.5
-    }]
-
-### DELETE `/`:
+#### DELETE:
 
 Remove todos os dados da base.
+Forma de uso: `$ curl -X "DELETE" http://localhost:8080/www.globoplay.globo.com/`
 
-Exemplo de uso: `$ curl -X "DELETE" http://localhost:8080/`
+### Arquitetura
 
+Dada a natureza da função para cálculo de coeficiênte de Jaccard, ela exige uma comparação de cada item (neste caso os documentos) com todos os demais itens, de modo a calcular a intersecção. Tal cálculo, irá comportar-se com tempo exponencial durante a execução do programa, tornando inviável o cálculo para grandes volumes de dados.
 
-## Requisitos
+A partir deste fato, a arquitetura do API, baseou-se em evitar o cálculo da intersecção.
+Deste modo, optou-se por manter registros de intersecções entre os documentos, registros estes a serem recalculados após cada nova visualização de um documento.
 
-### Escalabilidade
+#### Sobre as estruturas de armazenamento (em ambas versões, com e sem banco de dados)
 
-Faça uma bateria de testes de performance para garantir que sua solução possa ser usada na escala da globo.com:
-* ~200 milhões de pageviews por dia
-* ~3k recomendações por minuto.
+Sobre a classe UsersDocuments:
+idUser: id do usuário
+documentsList: lista contendo todos os documentos visualizados pelo usuário
 
-### Inicialização
+Sobre a classe Intersection:
+idIntersection: id da intersecção, gerado à partir da concatenação dos ids dos documentos A e B
+idDocumentoA e idDocumentoB: id dos documentos envolvidos na intersecção
 
-Devemos ser capazes de rodar sua aplicação e iniciar o serviço com os seguintes passos
+#### Sobre a lógica de funcionamento
+
+##### Lógica de inserção de views
+1. Recebe id do documento visualizado e id do usuário que visualizou o documento.
+2. Procura o registro do usuários: se existir, recupera os dados, senão, cria um novo usuário.
+3. Adiciona o documento à lista de documentos visualizados pelo usuário (somente se já não estiver lá).
+4. Percorre a lista de documentos visualizados pelo usuário e, para cada um:
+	4.1. Verifica se existe o registro de intersecção entre o documento recentemente visualizado e o documento contido na lista. Se existir, soma 1 ao valor armazenado no registro, senão, cria um novo registro de intersecção, com valor inicial igual a 1.
+OBS: Durante a atualização das intersecções, será atualizado o valor da intersecção do documento com ele mesmo. Nos referimos a este registro como valor de auto-intersecção, o qual representa o número de acessos que o documento teve.
+	
+##### Lógica de recomendação
+1. Recebe o id do documento base para a recomendação.
+2. Recupera todos os registros de intersecções nos quais o documento base seja referenciado como documentoA ou documentoB.
+3. Percorre a lista de intersecções e, para cada item:
+	3.1. Recupera os registros de auto-intersecção do documento base e do documento com o qual ele está sendo comparado.
+	3.2 Calcula o coeficiente de Jaccard: valorIntersecçãoAB / (valorAutoIntersecçãoA + valorAutoIntersecçãoB - valorIntersecçãoAB).
+	3.3 Armazena os resultados em uma lista em memória.
+4. Ordena a lista de resultados em ordem decrescente.
+5. Particiona a lista, de modo a manter somente os 10 primeiros elementos (se a lista for originalmente menor que 10, será mantida em seu tamanho original).
+6. Retorna a lista, para a exibição da mesma.
+
+### Requisitos
+
+Java Runtime Environment 8
+
+Java Development Kit 8
+
+Apache Maven 3.3.x ou superior
+
+### Como rodar
+
+Na pasta do projeto, execute os comandos abaixo para iniciar o serviço:
+
 ```
-git clone .../repositorio.git
-cd repositorio
-./configure
 make
 make run
 ```
 
-O serviço deve ouvir em umas das portas descritas no arquivo amazon/README.md.
+### Testes executados
 
-### Extras
+#### Testes Unitários
 
-Ao invés de receber o registro de visualização de documentos via POST, consuma essas visualizações de uma fila. Você pode fazer processamento em stream utilizando Kafka, Apache Samza, Apache Storm, Spark Streaming, uma combinação desses ou outra biblioteca de sua preferência.
+Foram incluídos no projeto, testes unitários para validar:
+-Cenário onde 3 documentos foram co-visualizados pelos mesmo usuário, no mesmo número de vezes. 
+-Cenário onde 5 documentos recebem visualizações por diversos usuários (10 diferentes usuários).
+Ambos cenários validam que a recomendação recebida pelos documentos esteja de acordo com o resultado esperado.
 
-## Avaliação
+#### Testes Funcionais
 
-1. Você deverá entregar seu código e uma documentação (basta um README.md atualizado) descrevendo
-a arquitetura escolhida, decisões tomadas, aprendizados, o que faria se tivesse mais tempo,
-requisitos necessários, explicação de como rodar o código e testes.
+Os testes funcionais executados seguiram os mesmos cenários dos testes unitários, porém, utilizando números maiores de registros, e análise dos resultados obtidos.
 
-2. Seu código e documentação serão observados por uma equipe de desenvolvedores que avaliará a simplicidade e clareza da solução, arquitetura, estilo de código, testes unitários, testes funcionais, teste de carga, nível de automação dos testes, implementação do código, e a organização geral projeto.
+#### Testes de carga
 
-3. A automação da infra-estrutura também é importante. Imagine que você
-precisará fazer deploy do seu código em múltiplos servidores, então não é
-interessante ter que ficar entrando máquina por máquina para fazer o deploy
-da aplicação.
+Testes de carga foram executados utilizando a ferramenta Postman.
+A ferramenta perde a estabilidade (e trava) em testes acima de 10 mil iterações, portanto, os testes de POST foram executados usando estes valores.
 
-4. Disponibilizamos uma VM no AWS, maiores informações de uso em amazon/README.md.
-   Se a VM estiver desligada entre em contato.
-   Caso seja insuficiente os recursos da VM no AWS para sua solução entre em contato.
+Em testes de POST, para a inserção de 10 mil registros, foram obtidos os seguintes resultados:
+	"delay": 0
+	"count": 10000
+	"totalPass": 10000
+	"totalFail": 0
+	"totalTime": 32182 ms
+	
+Em testes de GET, para a requisição de recomendações para 3 mil documentos, foram obtidos os seguintes resultados:
+	"delay": 0,
+	"count": 3000,
+	"totalPass": 3000,
+	"totalFail": 0,
+	"totalTime": 18131 ms
 
-### Dicas
-
-- Use ferramentas e bibliotecas open-source (desde que não façam todo o trabalho para você);
-- Documente as decisões e porquês;
-- Automatize o máximo possível;
-- Em caso de dúvidas, pergunte.
