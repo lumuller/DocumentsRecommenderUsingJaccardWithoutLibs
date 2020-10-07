@@ -63,7 +63,9 @@ value: amount of users who visualized both documents.
 2. Search on class UsersDocuments, for the user's register: If exists, retrieve data, if not, create a new user;
 3. The document is added to the list of documents visualized by the user (if is not there already) on class UsersDocuments;
 4. Check the list of documents visualized by this user, and for each document:
+
 	4.1. Check if exists an intersection register representing the recently visualized document and the document from the user´s list. If exists, add 1 to the storage value, else, created a new intersection register with valuen equal to 1.
+	
 NOTE: During the intersections update, we update also the intersection value amont the document with itself. We cqall the register *self-intersection*, and it only represents the number of access a document had.
 	
 ##### How recommendation is made
@@ -71,55 +73,54 @@ NOTE: During the intersections update, we update also the intersection value amo
 1. When the recommendation list is required, the GET method will receive the document ID (document base);
 2. Retrieve all intersection registers in which the document base is referred as documentA or documentB;
 3. Check the intersection list, and for each intersection:
+
 	3.1. Retrieves the self-interction register from base document and the compared document;
+	
 	3.2. Calculate Jaccard index based on the retrieve values: intersectionAB / (selfIntersectionA + selfIntersectionB - intersectionAB);
+	
 	3.3. Save the results on a list;
+	
 4. Order the list;
 5. Return the 10 main results from the list on a Json format.
 
-### Requisitos
+### Requirements
 
 Java Runtime Environment 8
 
 Java Development Kit 8
 
-Apache Maven 3.3.x ou superior
+Apache Maven 3.3.x ou higher
 
-### Como rodar
+### How to run
 
-Na pasta do projeto, execute os comandos abaixo para iniciar o serviço:
+Execute the following command to start the project:
 
 ```
 make
 make run
 ```
 
-### Testes executados
+### Performed tests
+#### Unit tests
 
-#### Testes Unitários
+Scenarios covered by unit tests:
+-Three documentos visualized by the same user, the same number of times;
+-Five documents visualized by different users (10 different users).
+Both scenarios validate that the received recommendation is as expected.
 
-Foram incluídos no projeto, testes unitários para validar:
--Cenário onde 3 documentos foram co-visualizados pelos mesmo usuário, no mesmo número de vezes. 
--Cenário onde 5 documentos recebem visualizações por diversos usuários (10 diferentes usuários).
-Ambos cenários validam que a recomendação recebida pelos documentos esteja de acordo com o resultado esperado.
+#### Load tests
 
-#### Testes Funcionais
+Load tests were performed using Postman.
+The tool is unstable on tests with more then 10000 interaction, and by that, the tests were executed using this value. 
 
-Os testes funcionais executados seguiram os mesmos cenários dos testes unitários, porém, utilizando números maiores de registros, e análise dos resultados obtidos.
-
-#### Testes de carga
-
-Testes de carga foram executados utilizando a ferramenta Postman.
-A ferramenta perde a estabilidade (e trava) em testes acima de 10 mil iterações, portanto, os testes de POST foram executados usando estes valores.
-
-Em testes de POST, para a inserção de 10 mil registros, foram obtidos os seguintes resultados:
+On POST, for 10k interactions, we had the following results:
 	"delay": 0
 	"count": 10000
 	"totalPass": 10000
 	"totalFail": 0
 	"totalTime": 32182 ms
 	
-Em testes de GET, para a requisição de recomendações para 3 mil documentos, foram obtidos os seguintes resultados:
+On GET, for 3k dinteractions, we had the following results:
 	"delay": 0,
 	"count": 3000,
 	"totalPass": 3000,
