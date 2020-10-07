@@ -1,22 +1,23 @@
-## Luana Müller
+## by Luana Müller
 DocumentsRecommender Project
 ================
 
-## Considerações Gerais
+## Goal
 
-Projeto de sistema de recomendação de documentos baseada em co-visitação de documentos.
+Thi project aim to recommend documents based on co-visitation of documents. The main idea is to discover and recommend similar documents using the style "people who saw that, also saw...".
+The main challenge of this project was * not to use * libraries or frameworks to do the recommendation.
 
-## Detalhes do projeto
+## Project details
 
-O projeto foi contruído utilizando a linguagem Java, utilizando o framework open-source Spring.
-A construção do projeto foi feita através do Spring Boot. 
+This project was built using Java programming language and the open-source framework Spring.
+It was also used Spring Boot.
 
-### Interfaces da API
+### Rest API endpoints
 
 #### POST: 
 
-Esse interface será chamada cada vez que um usuário ver um documento. Recebe o parâmetro `user`.
-Forma de uso: `$ curl -d"user=user1" http://localhost:8080/www.globoplay.globo.com/<idDocumento>/view`
+This endpoint must be used to feed the based about the documents read by the users. Every call to this endpoint requires the id of an `user` as parameter.
+How to use: `$ curl -d"user=user1" http://localhost:8080/www.globoplay.globo.com/<idDocumento>/view`
 
 #### GET:
 
