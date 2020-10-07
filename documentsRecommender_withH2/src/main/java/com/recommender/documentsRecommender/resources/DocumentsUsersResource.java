@@ -22,7 +22,7 @@ import com.recommender.documentsRecommender.repository.IntersectionRepository;
 import com.recommender.documentsRecommender.repository.UserDocumentsRepository;
 
 @RestController
-@RequestMapping(value="/www.globoplay.globo.com")
+@RequestMapping(value="/www.recommender.com")
 public class DocumentsUsersResource {
 		
 	@Autowired
@@ -252,7 +252,7 @@ public class DocumentsUsersResource {
 		private double score;	
 		
 		public ResultPresentation(String url, double score) {				
-			this.url = "www.globoplay.globo.com/v/" + url;
+			this.url = "www.recommender.com/v/" + url;
 			this.score = score;
 		}
 				
