@@ -5,7 +5,7 @@ DocumentsRecommender Project
 ## Goal
 
 Thi project aim to recommend documents based on co-visitation of documents. The main idea is to discover and recommend similar documents using the style "people who saw that, also saw...".
-The main challenge of this project was * not to use * libraries or frameworks to do the recommendation.
+The main challenge of this project was **not to use** libraries or frameworks to do the recommendation.
 
 ## Project details
 
@@ -17,55 +17,65 @@ It was also used Spring Boot.
 #### POST: 
 
 This endpoint must be used to feed the based about the documents read by the users. Every call to this endpoint requires the id of an `user` as parameter.
-How to use: `$ curl -d"user=user1" http://localhost:8080/www.globoplay.globo.com/<idDocumento>/view`
+How to use: `$ curl -d"user=user1" http://localhost:8080/www.recommender.com/<documentID>/view`
 
 #### GET:
 
-Essa interface irá retornar no formato json a lista dos dez documentos mais similares em ordem decrescente.
-Forma de uso: `$ curl http://localhost:8080/www.globoplay.globo.com/<idDocumento>/similar/`
+This endpoint will retrieve (json format) the ordered list of 10 most similar documents.
+How to use: `$ curl http://localhost:8080/www.recommender.com/<documentID>/similar/`
 
 #### DELETE:
 
-Remove todos os dados da base.
-Forma de uso: `$ curl -X "DELETE" http://localhost:8080/www.globoplay.globo.com/`
+This endpoint removes all the saved data: 
+How to use: `$ curl -X "DELETE" http://localhost:8080/www.recommender.com/`
 
-### Arquitetura
+### Architecture
 
-Dada a natureza da função para cálculo de coeficiênte de Jaccard, ela exige uma comparação de cada item (neste caso os documentos) com todos os demais itens, de modo a calcular a intersecção. Tal cálculo, irá comportar-se com tempo exponencial durante a execução do programa, tornando inviável o cálculo para grandes volumes de dados.
+To calculate similarity among documen, I opted to use the Jaccard coefficient calculation [https://en.wikipedia.org/wiki/Jaccard_index].  
+Due to the nature of Jaccard index, it is necessary to compare each item (in this case, a document) with all the remaining itens from the database, in order to calculate the intersection value (by intersection I mean the amount of users who had read the same pair of documents).
+By example, lets imagine two documents named DocumentA and DocumentB.
+DocumentA was read by 251 users. Document B was read by 345 users. The number of user that read both documents is 168. Then:
+J(DocumentA, DocumentB) = 168 / (251 + 345 - 168)
+J(DocumentA, DocumentB) = 0.3925
+This means, that the similarity among DocumentA and DocumentB is around 39%. 
+To achieve the goal of the project, this calculation must be done to every pair of documents available on the dataset, that results on a O(n2) problem, making it impossible to calculate for large volumes of data.
 
-A partir deste fato, a arquitetura do API, baseou-se em evitar o cálculo da intersecção.
-Deste modo, optou-se por manter registros de intersecções entre os documentos, registros estes a serem recalculados após cada nova visualização de um documento.
+Based on this fact, we built the projects architecture in order to *avoid* calculate the intersection.
+The approach used was to keep register if the intersection among documents. Each register is updated when a document is visualized. 
 
-#### Sobre as estruturas de armazenamento (em ambas versões, com e sem banco de dados)
 
-Sobre a classe UsersDocuments:
-idUser: id do usuário
-documentsList: lista contendo todos os documentos visualizados pelo usuário
+#### About the data model (used in both versions, with and without database)
 
-Sobre a classe Intersection:
-idIntersection: id da intersecção, gerado à partir da concatenação dos ids dos documentos A e B
-idDocumentoA e idDocumentoB: id dos documentos envolvidos na intersecção
+*About the class UsersDocuments:*
+idUser: user ID.
+documentsList: list containing all documents visualized by the user.
 
-#### Sobre a lógica de funcionamento
+*About the class Intersection:*
+idIntersection: Intersection ID generated using DocumentA and DocumentB ID concatenation.
+idDocumentoA e idDocumentoB: Id of the document A and B.
+value: amount of users who visualized both documents.
 
-##### Lógica de inserção de views
-1. Recebe id do documento visualizado e id do usuário que visualizou o documento.
-2. Procura o registro do usuários: se existir, recupera os dados, senão, cria um novo usuário.
-3. Adiciona o documento à lista de documentos visualizados pelo usuário (somente se já não estiver lá).
-4. Percorre a lista de documentos visualizados pelo usuário e, para cada um:
-	4.1. Verifica se existe o registro de intersecção entre o documento recentemente visualizado e o documento contido na lista. Se existir, soma 1 ao valor armazenado no registro, senão, cria um novo registro de intersecção, com valor inicial igual a 1.
-OBS: Durante a atualização das intersecções, será atualizado o valor da intersecção do documento com ele mesmo. Nos referimos a este registro como valor de auto-intersecção, o qual representa o número de acessos que o documento teve.
+#### About how it works
+
+##### How the Intersection is calculated 
+
+1. When a document is visualized, the POST method will receive the document ID and the user ID;
+2. Search on class UsersDocuments, for the user's register: If exists, retrieve data, if not, create a new user;
+3. The document is added to the list of documents visualized by the user (if is not there already) on class UsersDocuments;
+4. Check the list of documents visualized by this user, and for each document:
+	4.1. Check if exists an intersection register representing the recently visualized document and the document from the user´s list. If exists, add 1 to the storage value, else, created a new intersection register with valuen equal to 1.
+NOTE: During the intersections update, we update also the intersection value amont the document with itself. We cqall the register *self-intersection*, and it only represents the number of access a document had.
 	
-##### Lógica de recomendação
-1. Recebe o id do documento base para a recomendação.
-2. Recupera todos os registros de intersecções nos quais o documento base seja referenciado como documentoA ou documentoB.
-3. Percorre a lista de intersecções e, para cada item:
-	3.1. Recupera os registros de auto-intersecção do documento base e do documento com o qual ele está sendo comparado.
-	3.2 Calcula o coeficiente de Jaccard: valorIntersecçãoAB / (valorAutoIntersecçãoA + valorAutoIntersecçãoB - valorIntersecçãoAB).
-	3.3 Armazena os resultados em uma lista em memória.
-4. Ordena a lista de resultados em ordem decrescente.
-5. Particiona a lista, de modo a manter somente os 10 primeiros elementos (se a lista for originalmente menor que 10, será mantida em seu tamanho original).
-6. Retorna a lista, para a exibição da mesma.
+##### How recommendation is made
+
+1. When the recommendation list is required, the GET method will receive the document ID (document base);
+2. Retrieve all intersection registers in which the document base is referred as documentA or documentB;
+3. Check the intersection list, and for each intersection:
+	3.1. Retrieves the self-interction register from base document and the compared document;
+	3.2. Calculate Jaccard index based on the retrieve values: intersectionAB / (selfIntersectionA + selfIntersectionB - intersectionAB);
+	3.3. Save the results on a list;
+4. Order the list;
+5. Return the 10 main results from the list on a Json format.
 
 ### Requisitos
 
