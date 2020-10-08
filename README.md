@@ -66,7 +66,7 @@ value: amount of users who visualized both documents.
 
 	4.1. Check if exists an intersection register representing the recently visualized document and the document from the user´s list. If exists, add 1 to the storage value, else, created a new intersection register with valuen equal to 1.
 	
-NOTE: During the intersections update, we update also the intersection value amont the document with itself. We cqall the register *self-intersection*, and it only represents the number of access a document had.
+NOTE: During the intersections update, we update also the intersection value amont the document with itself. We cqall the register *self-intersection*, and it represents the number of access a document had.
 	
 ##### How recommendation is made
 
@@ -74,7 +74,7 @@ NOTE: During the intersections update, we update also the intersection value amo
 2. Retrieve all intersection registers in which the document base is referred as documentA or documentB;
 3. Check the intersection list, and for each intersection:
 
-	3.1. Retrieves the self-interction register from base document and the compared document;
+	3.1. Retrieves the self-intersection register from base document and the compared document;
 	
 	3.2. Calculate Jaccard index based on the retrieve values: intersectionAB / (selfIntersectionA + selfIntersectionB - intersectionAB);
 	
@@ -104,7 +104,7 @@ make run
 #### Unit tests
 
 Scenarios covered by unit tests:
--Three documentos visualized by the same user, the same number of times;
+-Three documents visualized by the same user, the same number of times;
 -Five documents visualized by different users (10 different users).
 Both scenarios validate that the received recommendation is as expected.
 
